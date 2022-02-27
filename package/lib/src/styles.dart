@@ -1,8 +1,10 @@
+import 'dart:convert';
+import 'dart:math' as Math;
 import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
 
 /// Signature for transforming text inside a markdown format element.
-typedef AnsiStyleTransform = String Function(String text);
+typedef AnsiStyleTransform = String Function(String text, bool ansiEnabled);
 
 /// A class for setting the style for a markdown format element.
 class AnsiStyle {
@@ -50,7 +52,8 @@ class AnsiStyle {
   }
 
   /// Transforms text inside a markdown element.
-  String transformText(String text) => (transform != null) ? transform!.call(text) : text;
+  String transformText(String text, bool ansiEnabled) =>
+      (transform != null) ? transform!.call(text, ansiEnabled) : text;
 }
 
 /// A class for setting the style for a block-level markdown formatting element, such as headings.
@@ -110,5 +113,37 @@ class AnsiHRStyle extends AnsiStyle {
   @override
   String? renderBegin(Element element) {
     return ''.padLeft(defaultSize, character);
+  }
+}
+
+/// Class for setting the output style of the code block.
+class AnsiCodeStyle extends AnsiStyle {
+  /// Creates a style object for the code block.
+  AnsiCodeStyle() : super(style: white.escape + backgroundDarkGray.escape);
+}
+
+/// Class for setting the output style of the preformatted block.
+class AnsiPreStyle extends AnsiBlockStyle {
+  /// Creates a style object for the preformatted block.
+  AnsiPreStyle() : super(style: '');
+
+  @override
+  String transformText(String text, bool ansiEnabled) {
+    if (ansiEnabled) {
+      final splitter = LineSplitter();
+      List<String> lines = splitter.convert(text);
+
+      // Find maximum lines width
+      final maxWidth = lines.fold<int>(0, (max, line) => Math.max(max, line.length));
+
+      // Fill lines to maximum width
+      lines = lines.map((line) => line.padRight(maxWidth)).toList(growable: false);
+
+      final padding = ' ';
+      final result = padding + lines.join(padding + '\n' + padding) + padding;
+      return result;
+    } else {
+      return text.trimRight();
+    }
   }
 }

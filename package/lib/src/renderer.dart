@@ -11,6 +11,7 @@ String markdownToAnsi(
   Resolver? linkResolver,
   Resolver? imageLinkResolver,
   bool inlineOnly = false,
+  bool encodeHtml = false,
   Map<String, AnsiStyle>? tagStyles,
   bool? ansiEnabled,
 }) {
@@ -20,6 +21,7 @@ String markdownToAnsi(
     extensionSet: extensionSet,
     linkResolver: linkResolver,
     imageLinkResolver: imageLinkResolver,
+    encodeHtml: encodeHtml,
   );
 
   if (inlineOnly) {

@@ -8,12 +8,12 @@ import 'package:markdown_ansi_renderer/src/styles.dart';
 class AnsiRenderer implements NodeVisitor {
   /// Default styles for converting markdown to ANSI codes.
   static Map<String, AnsiStyle> defaultTagStyles = {
-    'h1': AnsiBlockStyle(style: lightCyan.escape, transform: (t) => t.toUpperCase()),
-    'h2': AnsiBlockStyle(style: lightGray.escape, transform: (t) => t.toUpperCase()),
-    'h3': AnsiBlockStyle(transform: (t) => t.toUpperCase()),
-    'h4': AnsiBlockStyle(transform: (t) => t.toUpperCase()),
-    'h5': AnsiBlockStyle(transform: (t) => t.toUpperCase()),
-    'h6': AnsiBlockStyle(transform: (t) => t.toUpperCase()),
+    'h1': AnsiBlockStyle(style: lightCyan.escape, transform: (t, _) => t.toUpperCase()),
+    'h2': AnsiBlockStyle(style: lightGray.escape, transform: (t, _) => t.toUpperCase()),
+    'h3': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
+    'h4': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
+    'h5': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
+    'h6': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
     'p': AnsiBlockStyle(),
     'strong': AnsiStyle(style: styleBold.escape + white.escape),
     'em': AnsiStyle(style: styleItalic.escape + lightYellow.escape),
@@ -21,6 +21,8 @@ class AnsiRenderer implements NodeVisitor {
     'del': AnsiStyle(style: styleCrossedOut.escape),
     'a': AnsiLinkStyle(style: white.escape),
     'hr': AnsiHRStyle(),
+    'code': AnsiCodeStyle(),
+    'pre': AnsiPreStyle(),
   };
 
   late StringBuffer _buffer;
@@ -72,7 +74,7 @@ class AnsiRenderer implements NodeVisitor {
     }
 
     for (var tagStyle in _tagStyleStack) {
-      content = tagStyle.transformText(content);
+      content = tagStyle.transformText(content, ansiEnabled);
     }
 
     _buffer.write(content);
