@@ -1,0 +1,17 @@
+name: markdown_ansi_renderer
+description: ANSI markdown renderer.
+version: 1.0.0
+homepage: https://github.com/andyduke/markdown_ansi_renderer/tree/master/package
+repository: https://github.com/andyduke/markdown_ansi_renderer
+issues: https://github.com/andyduke/markdown_ansi_renderer/issues
+
+environment:
+  sdk: '>=2.15.1 <3.0.0'
+
+dependencies: 
+  io: ^1.0.3
+  markdown: ^4.0.1
+
+dev_dependencies:
+  lints: ^1.0.0
+  test: ^1.16.0
