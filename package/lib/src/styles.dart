@@ -86,7 +86,8 @@ class AnsiLinkStyle extends AnsiStyle {
 
   @override
   String? renderEnd(Element element) {
-    return ' (${element.attributes['href']})';
+    final prefix = element.textContent.trim().isNotEmpty ? ' ' : '';
+    return '$prefix(${element.attributes['href']})';
   }
 }
 
