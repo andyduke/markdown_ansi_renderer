@@ -19,7 +19,7 @@ The text "Hello Markdown" will be printed to the console, with the word "Markdow
 
 By default, some markdown elements have the following styles:
 
-| | |
+| Markdown element          | Style and transformation |
 |---------------------------|---|
 | First level heading       | Light Cyan and uppercase conversion |
 | Second level heading      | Light Gray and uppercase conversion |
