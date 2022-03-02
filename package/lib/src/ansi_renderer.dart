@@ -5,6 +5,7 @@ import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
 import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:markdown_ansi_renderer/src/styles.dart';
+import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
 
 /// Translates a parsed AST to ANSI codes.
 class AnsiRenderer implements NodeVisitor {
