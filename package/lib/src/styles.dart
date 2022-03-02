@@ -4,7 +4,7 @@ import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
 
 /// Signature for transforming text inside a markdown format element.
-typedef AnsiStyleTransform = String Function(String text, bool ansiEnabled);
+typedef AnsiStyleTransform = String Function(String text, bool ansiEnabled, bool isMultiline);
 
 /// A class for setting the style for a markdown format element.
 class AnsiStyle {
@@ -42,18 +42,18 @@ class AnsiStyle {
   }
 
   /// Displays text at the beginning of a markdown element (can be used to display links, footnotes, etc.).
-  String? renderBegin(Element element) {
+  String? renderBegin(Element element, bool ansiEnabled) {
     return null;
   }
 
   /// Displays text at the end of a markdown element (can be used to display links, footnotes, etc.).
-  String? renderEnd(Element element) {
+  String? renderEnd(Element element, bool ansiEnabled) {
     return null;
   }
 
   /// Transforms text inside a markdown element.
-  String transformText(String text, bool ansiEnabled) =>
-      (transform != null) ? transform!.call(text, ansiEnabled) : text;
+  String transformText(String text, bool ansiEnabled, bool isMultiline) =>
+      (transform != null) ? transform!.call(text, ansiEnabled, isMultiline) : text;
 }
 
 /// A class for setting the style for a block-level markdown formatting element, such as headings.
@@ -71,6 +71,24 @@ class AnsiBlockStyle extends AnsiStyle {
         );
 }
 
+/// Class for setting the style of headings.
+class AnsiHeadingStyle extends AnsiBlockStyle {
+  AnsiHeadingStyle({
+    String? style,
+    String? reset,
+    AnsiStyleTransform? transform,
+  }) : super(
+          style: style,
+          reset: reset,
+          transform: transform,
+        );
+
+  @override
+  String? renderBegin(Element element, bool ansiEnabled) {
+    return !ansiEnabled ? '\n' : null;
+  }
+}
+
 /// Class for setting the style for links.
 class AnsiLinkStyle extends AnsiStyle {
   /// Creates a style object for a link.
@@ -85,7 +103,7 @@ class AnsiLinkStyle extends AnsiStyle {
         );
 
   @override
-  String? renderEnd(Element element) {
+  String? renderEnd(Element element, bool ansiEnabled) {
     final prefix = element.textContent.trim().isNotEmpty ? ' ' : '';
     return '$prefix(${element.attributes['href']})';
   }
@@ -112,7 +130,7 @@ class AnsiHRStyle extends AnsiStyle {
   }) : super(style: '');
 
   @override
-  String? renderBegin(Element element) {
+  String? renderBegin(Element element, bool ansiEnabled) {
     return ''.padLeft(defaultSize, character);
   }
 }
@@ -121,15 +139,44 @@ class AnsiHRStyle extends AnsiStyle {
 class AnsiCodeStyle extends AnsiStyle {
   /// Creates a style object for the code block.
   AnsiCodeStyle() : super(style: white.escape + backgroundDarkGray.escape);
+
+  bool _isMultilineText(String text) => text.contains('\n');
+
+  bool _isMultiline(Element element) => _isMultilineText(element.textContent);
+
+  @override
+  String? renderBegin(Element element, bool ansiEnabled) {
+    if (!_isMultiline(element)) {
+      return ansiEnabled ? '' : '"';
+    } else {
+      return '';
+    }
+  }
+
+  @override
+  String? renderEnd(Element element, bool ansiEnabled) {
+    if (!_isMultiline(element)) {
+      return ansiEnabled ? '' : '"';
+    } else {
+      return '';
+    }
+  }
 }
 
 /// Class for setting the output style of the preformatted block.
 class AnsiPreStyle extends AnsiBlockStyle {
+  /// The default character to mark the block on the left at the beginning of each line.
+  static const String defaultTextMark = '▌ ';
+
+  /// The block marker character on the left at the beginning of each line.
+  final String textMark;
+
   /// Creates a style object for the preformatted block.
-  AnsiPreStyle() : super(style: '');
+  AnsiPreStyle([this.textMark = defaultTextMark]) : super(style: '');
 
   @override
-  String transformText(String text, bool ansiEnabled) {
+  String transformText(String text, bool ansiEnabled, bool isMultiline) {
+    late String result;
     if (ansiEnabled) {
       final splitter = LineSplitter();
       List<String> lines = splitter.convert(text);
@@ -141,14 +188,16 @@ class AnsiPreStyle extends AnsiBlockStyle {
       lines = lines.map((line) => line.padRight(maxWidth)).toList(growable: false);
 
       final padding = ' ';
-      final result = padding + lines.join(padding + '\n' + padding) + padding;
-      return result;
+      result = padding + lines.join(padding + '\n' + padding) + padding;
     } else {
-      return text.trimRight();
+      result = text.trimRight();
+      result = textMark + result.replaceAll('\n', '\n$textMark');
     }
+    return result;
   }
 }
 
+/// Class for setting the list item style.
 class AnsiListItemStyle extends AnsiStyle {
   AnsiListItemStyle() : super(style: '');
 
@@ -158,7 +207,7 @@ class AnsiListItemStyle extends AnsiStyle {
   // }
 
   @override
-  String transformText(String text, bool ansiEnabled) {
+  String transformText(String text, bool ansiEnabled, bool isMultiline) {
     return '   $text';
   }
 }

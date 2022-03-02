@@ -11,12 +11,12 @@ import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
 class AnsiRenderer implements NodeVisitor {
   /// Default styles for converting markdown to ANSI codes.
   static Map<String, AnsiStyle> defaultTagStyles = {
-    'h1': AnsiBlockStyle(style: lightCyan.escape, transform: (t, _) => t.toUpperCase()),
-    'h2': AnsiBlockStyle(style: lightGray.escape, transform: (t, _) => t.toUpperCase()),
-    'h3': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
-    'h4': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
-    'h5': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
-    'h6': AnsiBlockStyle(transform: (t, _) => t.toUpperCase()),
+    'h1': AnsiHeadingStyle(style: lightCyan.escape, transform: (t, _, __) => t.toUpperCase()),
+    'h2': AnsiHeadingStyle(style: lightGray.escape, transform: (t, _, __) => t.toUpperCase()),
+    'h3': AnsiHeadingStyle(transform: (t, _, __) => t.toUpperCase()),
+    'h4': AnsiHeadingStyle(transform: (t, _, __) => t.toUpperCase()),
+    'h5': AnsiHeadingStyle(transform: (t, _, __) => t.toUpperCase()),
+    'h6': AnsiHeadingStyle(transform: (t, _, __) => t.toUpperCase()),
     'p': AnsiBlockStyle(),
     'strong': AnsiStyle(style: styleBold.escape + white.escape),
     'em': AnsiStyle(style: styleItalic.escape + lightYellow.escape),
@@ -70,8 +70,9 @@ class AnsiRenderer implements NodeVisitor {
 
   @override
   void visitText(Text text) {
+    final isMultiline = const ['br', 'p', 'li'].contains(_lastVisitedTag);
     var content = text.text;
-    if (const ['br', 'p', 'li'].contains(_lastVisitedTag)) {
+    if (isMultiline) {
       var lines = LineSplitter.split(content);
       content = content.contains('<pre>') ? lines.join('\n') : lines.map((line) => line.trimLeft()).join('\n');
       if (text.text.endsWith('\n')) {
@@ -80,7 +81,7 @@ class AnsiRenderer implements NodeVisitor {
     }
 
     for (var tagStyle in _tagStyleStack) {
-      content = tagStyle.transformText(content, ansiEnabled);
+      content = tagStyle.transformText(content, ansiEnabled, isMultiline);
     }
 
     _buffer.write(content);
@@ -108,7 +109,7 @@ class AnsiRenderer implements NodeVisitor {
         }
       }
 
-      final begin = tagStyles[element.tag]!.renderBegin(element);
+      final begin = tagStyles[element.tag]!.renderBegin(element, ansiEnabled);
       if (begin != null) {
         _buffer.write(begin);
       }
@@ -151,7 +152,7 @@ class AnsiRenderer implements NodeVisitor {
     if (tagStyles.containsKey(element.tag)) {
       if (_tagStyleStack.isNotEmpty) _tagStyleStack.removeLast();
 
-      final end = tagStyles[element.tag]!.renderEnd(element);
+      final end = tagStyles[element.tag]!.renderEnd(element, ansiEnabled);
       if (end != null) {
         _buffer.write(end);
       }
