@@ -1,16 +1,33 @@
+import 'package:markdown/markdown.dart';
 import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('A group of tests', () {
-    final awesome = Awesome();
+  test('Table renderer', () {
+    final String mdText = '''
+| Name            |  Price |
+|-----------------|-------:|
+| Morgran Aero 8  | 166944 |
+| Morgran Plus 4  |  69980 |
+| Morgran 4x4     |  35550 |
+''';
 
-    setUp(() {
-      // Additional setup goes here.
-    });
+    final text = markdownToAnsi(
+      mdText,
+      inlineSyntaxes: [StrikethroughSyntax(), UnderlineSyntax(), AnyTagSyntax()],
+      blockSyntaxes: [
+        AnsiTableSyntax(
+          colSpacing: 4,
+          // style: TableStyle(border: true),
+          // border: TextBorder.ROUNDED,
+          // cellStyle: CellStyle(
+          //   borderRight: true,
+          // ),
+        ),
+      ],
+    );
+    print(text);
 
-    test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
-    });
+    // expect(text, isTrue);
   });
 }

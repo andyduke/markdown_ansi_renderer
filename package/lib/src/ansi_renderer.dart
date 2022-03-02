@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io' as io;
+import 'package:barbecue/barbecue.dart';
 import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
+import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:markdown_ansi_renderer/src/styles.dart';
 
 /// Translates a parsed AST to ANSI codes.
@@ -23,6 +25,9 @@ class AnsiRenderer implements NodeVisitor {
     'hr': AnsiHRStyle(),
     'code': AnsiCodeStyle(),
     'pre': AnsiPreStyle(),
+    'ul': AnsiStyle(style: '', reset: ''),
+    'li': AnsiListItemStyle(),
+    // TODO: table -> render via "barbecue" (https://pub.dev/packages/barbecue)
   };
 
   late StringBuffer _buffer;
@@ -110,6 +115,10 @@ class AnsiRenderer implements NodeVisitor {
 
     _lastVisitedTag = element.tag;
 
+    if (element is TableElement) {
+      _buffer.write(element.table.render(border: element.border));
+    }
+
     if (element.isEmpty) {
       // Empty element like <hr/>.
       _buffer.writeln();
@@ -174,10 +183,10 @@ const _blockTags = [
   'h6',
   'hr',
   'li',
-  'ol',
+  // 'ul',
+  // 'ol',
   'p',
   'pre',
-  'ul',
   'address',
   'article',
   'aside',

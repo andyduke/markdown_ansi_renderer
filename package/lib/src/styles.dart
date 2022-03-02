@@ -148,3 +148,17 @@ class AnsiPreStyle extends AnsiBlockStyle {
     }
   }
 }
+
+class AnsiListItemStyle extends AnsiStyle {
+  AnsiListItemStyle() : super(style: '');
+
+  // @override
+  // String? renderBegin(Element element) {
+  //   return ' - ';
+  // }
+
+  @override
+  String transformText(String text, bool ansiEnabled) {
+    return '   $text';
+  }
+}
