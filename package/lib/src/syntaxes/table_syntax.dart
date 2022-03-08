@@ -74,7 +74,8 @@ class TableElement extends Element {
 }
 
 class CellElement extends Element {
-  final CellStyle? style;
+  // final CellStyle? style;
+  final AnsiTableBorder? border;
 
   bool _isFirst = false;
   bool _isLast = false;
@@ -86,11 +87,12 @@ class CellElement extends Element {
   int get index => _index;
   TextAlignment get alignment => _alignment ?? TextAlignment.TopLeft;
 
-  CellElement(String tag, List<Node>? children, {this.style}) : super(tag, children);
+  CellElement(String tag, List<Node>? children, {this.border}) : super(tag, children);
 }
 
 class RowElement extends Element {
-  final CellStyle? style;
+  // final CellStyle? style;
+  final AnsiTableBorder? border;
 
   bool _isFirst = false;
   bool _isLast = false;
@@ -101,7 +103,7 @@ class RowElement extends Element {
   RowElement(
     String tag,
     List<Node>? children, {
-    this.style,
+    this.border,
   }) : super(tag, children);
 }
 
@@ -304,11 +306,12 @@ class AnsiTableSyntax extends BlockSyntax {
         CellElement(
           cellType,
           [UnparsedContent(_padCell(i, cells.length, cells[i]))],
-          style: ((i < alignments.length) && (alignments[i] != null))
-              ? CellStyle(
-                  alignment: alignments[i],
-                )
-              : null,
+          border: border,
+          // style: ((i < alignments.length) && (alignments[i] != null))
+          //     ? CellStyle(
+          //         alignment: alignments[i],
+          //       )
+          //     : null,
         )
           .._isFirst = (i == 0)
           .._isLast = (i == cells.length - 1)
@@ -319,7 +322,7 @@ class AnsiTableSyntax extends BlockSyntax {
     return RowElement(
       'tr',
       row,
-      style: cellStyle,
+      border: border,
     );
   }
 
