@@ -5,14 +5,6 @@ import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
 import 'package:markdown_ansi_renderer/src/table/alignment.dart';
 
 class AnsiTableStyle extends AnsiBlockStyle {
-  // static const int defaultCellPadding = 0;
-
-  // final int cellPadding;
-
-  // AnsiTableStyle({
-  //   this.cellPadding = defaultCellPadding,
-  // }) : super();
-
   @override
   bool get isCompound => true;
 
@@ -68,14 +60,16 @@ class AnsiTableStyle extends AnsiBlockStyle {
     _columnCount = math.max(_columnCount, nodes.length);
 
     if (_columnWidth.length < nodes.length) {
-      for (var i = _columnWidth.length; i <= nodes.length; i++) {
+      for (var i = _columnWidth.length; i < nodes.length; i++) {
         _columnWidth.add(0);
       }
     }
 
     for (var i = 0; i < nodes.length; i++) {
-      _columnWidth[i] = math.max(_columnWidth[i], nodes[i].textContent.length);
-      result += nodes[i].textContent.length;
+      final int padding = (nodes[i] is CellElement) ? (nodes[i] as CellElement).cellPadding : 0;
+      final int textSize = nodes[i].textContent.length + (padding * 2);
+      _columnWidth[i] = math.max(_columnWidth[i], textSize);
+      result += textSize;
     }
     return result;
   }
@@ -214,8 +208,10 @@ class AnsiTableCellStyle extends AnsiStyle {
 
     if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
-      final String padding =
-          (cell.alignment == AnsiTableAlignment.right) ? (emptyChar * (width - cell.textContent.length)) : '';
+      final String padding = ((cell.alignment == AnsiTableAlignment.right)
+              ? (emptyChar * (width - (cell.cellPadding * 2) - cell.textContent.length))
+              : '') +
+          (emptyChar * cell.cellPadding);
 
       if (cell.isFirst) {
         return vChar + padding;
@@ -236,8 +232,10 @@ class AnsiTableCellStyle extends AnsiStyle {
 
     if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
-      final String padding =
-          (cell.alignment == AnsiTableAlignment.left) ? (emptyChar * (width - cell.textContent.length)) : '';
+      final String padding = ((cell.alignment == AnsiTableAlignment.left)
+              ? (emptyChar * (width - (cell.cellPadding * 2) - cell.textContent.length))
+              : '') +
+          (emptyChar * cell.cellPadding);
 
       return padding + vChar;
     } else {

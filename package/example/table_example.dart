@@ -19,6 +19,7 @@ void main() {
         // border: AnsiTableBorder.DEFAULT,
         // border: AnsiTableBorder.HORIZ,
         colSpacing: 4,
+        cellPadding: 1,
       ),
     ],
   );

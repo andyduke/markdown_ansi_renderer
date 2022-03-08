@@ -22,6 +22,7 @@ class TableElement extends Element {
 
 class CellElement extends Element {
   final AnsiTableBorder? border;
+  final int cellPadding;
 
   bool _isFirst = false;
   bool _isLast = false;
@@ -33,7 +34,12 @@ class CellElement extends Element {
   int get index => _index;
   AnsiTableAlignment get alignment => _alignment ?? AnsiTableAlignment.left;
 
-  CellElement(String tag, List<Node>? children, {this.border}) : super(tag, children);
+  CellElement(
+    String tag,
+    List<Node>? children, {
+    this.border,
+    this.cellPadding = 0,
+  }) : super(tag, children);
 }
 
 class HeadElement extends Element {
@@ -73,6 +79,9 @@ class AnsiTableSyntax extends BlockSyntax {
   /// Column spacing
   final int colSpacing;
 
+  /// Cell padding
+  final int cellPadding;
+
   @override
   bool canEndBlock(BlockParser parser) => false;
 
@@ -83,6 +92,7 @@ class AnsiTableSyntax extends BlockSyntax {
     this.border,
     this.headingBorder,
     this.colSpacing = 0,
+    this.cellPadding = 0,
   });
 
   @override
@@ -242,6 +252,7 @@ class AnsiTableSyntax extends BlockSyntax {
           cellType,
           [UnparsedContent(_padCell(i, cells.length, cells[i]))],
           border: border,
+          cellPadding: cellPadding,
         )
           .._isFirst = (i == 0)
           .._isLast = (i == cells.length - 1)
