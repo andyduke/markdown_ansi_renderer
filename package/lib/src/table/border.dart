@@ -7,6 +7,42 @@ class AnsiTableBorder {
     return AnsiTableBorder.fromCharacters(Characters(string));
   }
 
+  AnsiTableBorder.custom({
+    this.empty = ' ',
+    this.down = '',
+    this.up = '',
+    this.vertical = '',
+    this.right = '',
+    this.downAndRight = '',
+    this.upAndRight = '',
+    this.verticalAndRight = '',
+    this.left = '',
+    this.downAndLeft = '',
+    this.upAndLeft = '',
+    this.verticalAndLeft = '',
+    this.horizontal = '',
+    this.downAndHorizontal = '',
+    this.upAndHorizontal = '',
+    this.verticalAndHorizontal = '',
+  }) : characters = Characters(
+          empty +
+              down +
+              up +
+              vertical +
+              right +
+              downAndRight +
+              upAndRight +
+              verticalAndRight +
+              left +
+              downAndLeft +
+              upAndLeft +
+              verticalAndLeft +
+              horizontal +
+              downAndHorizontal +
+              upAndHorizontal +
+              verticalAndHorizontal,
+        );
+
   AnsiTableBorder.empty()
       : characters = Characters(''),
         empty = ' ',
@@ -92,5 +128,6 @@ class AnsiTableBorder {
 
   static final HEAVY = AnsiTableBorder(' ╹╹┃╺┏┗┣╸┓┛┫━┳┻╋');
 
-  static final HORIZ = AnsiTableBorder('    ╶╶╶╶╴╴╴╴────');
+  // static final HORIZ = AnsiTableBorder('    ╶╶╶╶╴╴╴╴────');
+  static final HORIZ = AnsiTableBorder('    ────────────');
 }

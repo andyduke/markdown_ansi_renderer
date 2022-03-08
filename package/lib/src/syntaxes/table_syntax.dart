@@ -90,6 +90,16 @@ class CellElement extends Element {
   CellElement(String tag, List<Node>? children, {this.border}) : super(tag, children);
 }
 
+class HeadElement extends Element {
+  final AnsiTableBorder? border;
+
+  HeadElement(
+    String tag,
+    List<Node>? children, {
+    this.border,
+  }) : super(tag, children);
+}
+
 class RowElement extends Element {
   // final CellStyle? style;
   final AnsiTableBorder? border;
@@ -128,6 +138,9 @@ class AnsiTableSyntax extends BlockSyntax {
   /// Table border style (ASCII, Pseudographics)
   final AnsiTableBorder? border;
 
+  /// Table heading border style (ASCII, Pseudographics)
+  final AnsiTableBorder? headingBorder;
+
   /// Default cell style
   final CellStyle? cellStyle;
 
@@ -143,6 +156,7 @@ class AnsiTableSyntax extends BlockSyntax {
   const AnsiTableSyntax({
     this.style,
     this.border,
+    this.headingBorder,
     this.cellStyle,
     this.colSpacing = 0,
   });
@@ -163,12 +177,12 @@ class AnsiTableSyntax extends BlockSyntax {
   Node? parse(BlockParser parser) {
     var alignments = _parseAlignments(parser.next!);
     var columnCount = alignments.length;
-    var headRow = _parseRow(parser, alignments, 'th', cellStyle: CellStyle(borderBottom: true));
+    var headRow = _parseRow(parser, alignments, 'th' /*, rowBorder: headingBorder*/);
     if (headRow.children!.length != columnCount) {
       return null;
     }
     (headRow as RowElement)._isFirst = true;
-    var head = Element('thead', [headRow]);
+    var head = HeadElement('thead', [headRow], border: headingBorder);
 
     // Advance past the divider of hyphens.
     parser.advance();
@@ -245,7 +259,8 @@ class AnsiTableSyntax extends BlockSyntax {
   ///
   /// [alignments] is used to annotate an alignment on each cell, and
   /// [cellType] is used to declare either "td" or "th" cells.
-  Element _parseRow(BlockParser parser, List<TextAlignment?> alignments, String cellType, {CellStyle? cellStyle}) {
+  Element _parseRow(BlockParser parser, List<TextAlignment?> alignments, String cellType,
+      {AnsiTableBorder? rowBorder}) {
     var line = parser.current;
     var cells = <String>[];
     var index = _walkPastOpeningPipe(line);
@@ -322,7 +337,7 @@ class AnsiTableSyntax extends BlockSyntax {
     return RowElement(
       'tr',
       row,
-      border: border,
+      border: rowBorder ?? border,
     );
   }
 

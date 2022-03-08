@@ -14,8 +14,10 @@ void main() {
     inlineSyntaxes: [StrikethroughSyntax(), UnderlineSyntax(), AnyTagSyntax()],
     blockSyntaxes: [
       AnsiTableSyntax(
+        headingBorder: AnsiTableBorder.custom(horizontal: '─'),
         // border: AnsiTableBorder.empty(),
-        border: AnsiTableBorder.DEFAULT,
+        // border: AnsiTableBorder.DEFAULT,
+        // border: AnsiTableBorder.HORIZ,
         colSpacing: 4,
       ),
     ],

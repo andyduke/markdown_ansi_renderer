@@ -28,6 +28,7 @@ class AnsiRenderer implements NodeVisitor {
     'ul': AnsiStyle(style: '', reset: ''),
     'li': AnsiListItemStyle(),
     'table': AnsiTableStyle(),
+    'thead': AnsiTableHeadStyle(),
     'tr': AnsiTableRowStyle(),
     'th': AnsiTableCellStyle(),
     'td': AnsiTableCellStyle(),

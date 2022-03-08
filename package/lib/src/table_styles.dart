@@ -16,20 +16,20 @@ class AnsiTableStyle extends AnsiBlockStyle {
   @override
   bool get isCompound => true;
 
-  // AnsiTableBorder? _border;
-  // AnsiTableBorder get border => _border ?? AnsiTableBorder.DEFAULT;
+  AnsiTableBorder? _border;
+  AnsiTableBorder? get border => _border;
 
   @override
   String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     // Calc columns widths
-    // _border = (element is TableElement) ? element.border : null;
+    _border = (element is TableElement) ? element.border : null;
     _width = _calcWidth(element);
     return '';
   }
 
   @override
   String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
-    // _border = null;
+    _border = null;
     _width = null;
     return '';
   }
@@ -55,7 +55,9 @@ class AnsiTableStyle extends AnsiBlockStyle {
     int result = 0;
     for (var row in nodes) {
       final nodes = (row as Element).children!;
-      result = math.max(result, _calcRowWidth(nodes) + 2 + (nodes.length - 1));
+      final borderWidth = (row is RowElement) ? (row.border?.vertical.length ?? 0) : 0;
+      final borders = (borderWidth * 2) + ((nodes.length - 1) * borderWidth);
+      result = math.max(result, _calcRowWidth(nodes) + borders);
     }
     return result;
   }
@@ -76,6 +78,36 @@ class AnsiTableStyle extends AnsiBlockStyle {
       result += nodes[i].textContent.length;
     }
     return result;
+  }
+}
+
+class AnsiTableHeadStyle extends AnsiStyle {
+  AnsiTableHeadStyle() : super(style: '');
+
+  @override
+  String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
+    final AnsiTableStyle? tableStyle = parentStyle as AnsiTableStyle;
+    final HeadElement head = element as HeadElement;
+
+    if (tableStyle != null && head.border != null && (tableStyle.border == null || tableStyle.border!.isEmpty)) {
+      if (head.border!.isEmpty) return '';
+
+      final StringBuffer line = StringBuffer();
+      line.write(head.border!.upAndRight);
+      for (var i = 0; i < tableStyle.columnCount; i++) {
+        line.write(head.border!.horizontal * tableStyle.columnWidth(i));
+        if (i < (tableStyle.columnCount - 1)) {
+          line.write(head.border!.upAndHorizontal);
+        }
+      }
+      line.write(head.border!.upAndLeft);
+
+      line.writeln();
+
+      return line.toString();
+    } else {
+      return '';
+    }
   }
 }
 
@@ -131,7 +163,8 @@ class AnsiTableRowStyle extends AnsiStyle {
       }
       */
     } else {
-      return '\n';
+      // return '\n';
+      return '';
     }
   }
 
@@ -140,7 +173,7 @@ class AnsiTableRowStyle extends AnsiStyle {
     final AnsiTableStyle? tableStyle = parentStyle as AnsiTableStyle;
     final RowElement row = element as RowElement;
 
-    if (row.border != null && tableStyle != null) {
+    if (tableStyle != null && row.border != null) {
       if (row.border!.isEmpty) return '\n';
 
       if (row.isFirst) {
@@ -176,14 +209,16 @@ class AnsiTableCellStyle extends AnsiStyle {
   String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     final AnsiTableStyle? tableStyle = parentStyle as AnsiTableStyle;
     final CellElement cell = element as CellElement;
+    final emptyChar = cell.border?.empty ?? ' ';
+    final vChar = cell.border?.vertical ?? '';
 
-    if (cell.border != null && tableStyle != null) {
+    if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
       final String padding =
-          (cell.alignment == TextAlignment.TopRight) ? (cell.border!.empty * (width - cell.textContent.length)) : '';
+          (cell.alignment == TextAlignment.TopRight) ? (emptyChar * (width - cell.textContent.length)) : '';
 
       if (cell.isFirst) {
-        return cell.border!.vertical + padding;
+        return vChar + padding;
       } else {
         return padding;
       }
@@ -196,13 +231,15 @@ class AnsiTableCellStyle extends AnsiStyle {
   String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     final AnsiTableStyle? tableStyle = parentStyle as AnsiTableStyle;
     final CellElement cell = element as CellElement;
+    final emptyChar = cell.border?.empty ?? ' ';
+    final vChar = cell.border?.vertical ?? '';
 
-    if (cell.border != null && tableStyle != null) {
+    if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
       final String padding =
-          (cell.alignment == TextAlignment.TopLeft) ? (cell.border!.empty * (width - cell.textContent.length)) : '';
+          (cell.alignment == TextAlignment.TopLeft) ? (emptyChar * (width - cell.textContent.length)) : '';
 
-      return padding + cell.border!.vertical;
+      return padding + vChar;
     } else {
       return '';
     }
