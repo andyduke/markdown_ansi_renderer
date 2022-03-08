@@ -1,8 +1,8 @@
 import 'dart:math' as math;
-import 'package:barbecue/barbecue.dart';
 import 'package:markdown/markdown.dart';
 import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
+import 'package:markdown_ansi_renderer/src/table/alignment.dart';
 
 class AnsiTableStyle extends AnsiBlockStyle {
   // static const int defaultCellPadding = 0;
@@ -215,7 +215,7 @@ class AnsiTableCellStyle extends AnsiStyle {
     if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
       final String padding =
-          (cell.alignment == TextAlignment.TopRight) ? (emptyChar * (width - cell.textContent.length)) : '';
+          (cell.alignment == AnsiTableAlignment.right) ? (emptyChar * (width - cell.textContent.length)) : '';
 
       if (cell.isFirst) {
         return vChar + padding;
@@ -237,7 +237,7 @@ class AnsiTableCellStyle extends AnsiStyle {
     if (tableStyle != null) {
       final width = tableStyle.columnWidth(cell.index);
       final String padding =
-          (cell.alignment == TextAlignment.TopLeft) ? (emptyChar * (width - cell.textContent.length)) : '';
+          (cell.alignment == AnsiTableAlignment.left) ? (emptyChar * (width - cell.textContent.length)) : '';
 
       return padding + vChar;
     } else {

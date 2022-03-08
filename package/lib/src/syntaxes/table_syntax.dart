@@ -1,6 +1,6 @@
-import 'package:barbecue/barbecue.dart';
 import 'package:charcode/charcode.dart';
 import 'package:markdown/markdown.dart';
+import 'package:markdown_ansi_renderer/src/table/alignment.dart';
 import 'package:markdown_ansi_renderer/src/table/border.dart';
 
 /// A pattern which should never be used. It just satisfies non-nullability of
@@ -10,82 +10,28 @@ final _dummyPattern = RegExp('');
 /// A line of hyphens separated by at least one pipe.
 final _tablePattern = RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?$');
 
-/*
-class TableElement extends Element {
-  final Table table;
-  final TextBorder? border;
-
-  TableElement(this.table, {this.border}) : super('table', null);
-
-  String render(/*String Function(String text) renderContent*/) {
-    return table.render(border: border);
-  }
-
-  @override
-  List<Node>? get children {
-    return table.positionedCells
-        .map((cell) => Element('cell', [UnparsedContent(cell.cell.content)]))
-        // .map((cell) => Element('cell', [Text(cell.cell.content)]))
-        .toList(growable: false);
-  }
-}
-*/
-
 class TableElement extends Element {
   final AnsiTableBorder? border;
-  final TableStyle? style;
-  final CellStyle? cellStyle;
 
   TableElement(
     String tag,
     List<Node>? children, {
     this.border,
-    this.style,
-    this.cellStyle,
   }) : super(tag, children);
-
-  /*
-  Row _renderRow(List<Node> nodes, {CellStyle? cellstyle}) {
-    final result = Row(
-      cells: nodes.map(_renderNode).toList(growable: false),
-      cellStyle: cellStyle,
-    );
-  }
-
-  Cell _renderNode(Node node) {
-    if (Node is Element) {
-    } else {
-      return node.textContent;
-    }
-  }
-  */
-
-  /*
-  String render() {
-    return '<${children!.map((c) => c.toString()).toList()}>';
-
-    // TableSection? head, body;
-
-    // if ((children!.length > 0) && (children!.first is Element)) {
-    //   head = TableSection(rows: [_renderRow((children!.first as Element).children!)]);
-    // }
-  }
-  */
 }
 
 class CellElement extends Element {
-  // final CellStyle? style;
   final AnsiTableBorder? border;
 
   bool _isFirst = false;
   bool _isLast = false;
   int _index = 0;
-  TextAlignment? _alignment;
+  AnsiTableAlignment? _alignment;
 
   bool get isFirst => _isFirst;
   bool get isLast => _isLast;
   int get index => _index;
-  TextAlignment get alignment => _alignment ?? TextAlignment.TopLeft;
+  AnsiTableAlignment get alignment => _alignment ?? AnsiTableAlignment.left;
 
   CellElement(String tag, List<Node>? children, {this.border}) : super(tag, children);
 }
@@ -101,7 +47,6 @@ class HeadElement extends Element {
 }
 
 class RowElement extends Element {
-  // final CellStyle? style;
   final AnsiTableBorder? border;
 
   bool _isFirst = false;
@@ -117,32 +62,13 @@ class RowElement extends Element {
   }) : super(tag, children);
 }
 
-class TableCell extends Cell {
-  const TableCell(String content, {int columnSpan = 1, int rowSpan = 1, CellStyle? style})
-      : super(
-          content,
-          columnSpan: columnSpan,
-          rowSpan: rowSpan,
-          style: style,
-        );
-
-  // @override
-  // String get content => '<${super.content}>';
-}
-
 /// Parses tables.
 class AnsiTableSyntax extends BlockSyntax {
-  /// Table style (eg. border & borderStyle)
-  final TableStyle? style;
-
   /// Table border style (ASCII, Pseudographics)
   final AnsiTableBorder? border;
 
   /// Table heading border style (ASCII, Pseudographics)
   final AnsiTableBorder? headingBorder;
-
-  /// Default cell style
-  final CellStyle? cellStyle;
 
   /// Column spacing
   final int colSpacing;
@@ -154,10 +80,8 @@ class AnsiTableSyntax extends BlockSyntax {
   RegExp get pattern => _dummyPattern;
 
   const AnsiTableSyntax({
-    this.style,
     this.border,
     this.headingBorder,
-    this.cellStyle,
     this.colSpacing = 0,
   });
 
@@ -177,7 +101,7 @@ class AnsiTableSyntax extends BlockSyntax {
   Node? parse(BlockParser parser) {
     var alignments = _parseAlignments(parser.next!);
     var columnCount = alignments.length;
-    var headRow = _parseRow(parser, alignments, 'th' /*, rowBorder: headingBorder*/);
+    var headRow = _parseRow(parser, alignments, 'th');
     if (headRow.children!.length != columnCount) {
       return null;
     }
@@ -211,8 +135,6 @@ class AnsiTableSyntax extends BlockSyntax {
         'table',
         [head],
         border: border,
-        style: style,
-        cellStyle: cellStyle ?? const CellStyle(),
       );
     } else {
       (rows.last as RowElement)._isLast = true;
@@ -222,13 +144,11 @@ class AnsiTableSyntax extends BlockSyntax {
         'table',
         [head, body],
         border: border,
-        style: style,
-        cellStyle: cellStyle ?? const CellStyle(),
       );
     }
   }
 
-  List<TextAlignment?> _parseAlignments(String line) {
+  List<AnsiTableAlignment?> _parseAlignments(String line) {
     var startIndex = _walkPastOpeningPipe(line);
 
     var endIndex = line.length - 1;
@@ -247,9 +167,9 @@ class AnsiTableSyntax extends BlockSyntax {
     // Optimization: We walk [line] too many times. One lap should do it.
     return line.substring(startIndex, endIndex + 1).split('|').map((column) {
       column = column.trim();
-      if (column.startsWith(':') && column.endsWith(':')) return TextAlignment.TopCenter;
-      if (column.startsWith(':')) return TextAlignment.TopLeft;
-      if (column.endsWith(':')) return TextAlignment.TopRight;
+      if (column.startsWith(':') && column.endsWith(':')) return AnsiTableAlignment.center;
+      if (column.startsWith(':')) return AnsiTableAlignment.left;
+      if (column.endsWith(':')) return AnsiTableAlignment.right;
       return null;
     }).toList();
   }
@@ -259,7 +179,7 @@ class AnsiTableSyntax extends BlockSyntax {
   ///
   /// [alignments] is used to annotate an alignment on each cell, and
   /// [cellType] is used to declare either "td" or "th" cells.
-  Element _parseRow(BlockParser parser, List<TextAlignment?> alignments, String cellType,
+  Element _parseRow(BlockParser parser, List<AnsiTableAlignment?> alignments, String cellType,
       {AnsiTableBorder? rowBorder}) {
     var line = parser.current;
     var cells = <String>[];
@@ -322,11 +242,6 @@ class AnsiTableSyntax extends BlockSyntax {
           cellType,
           [UnparsedContent(_padCell(i, cells.length, cells[i]))],
           border: border,
-          // style: ((i < alignments.length) && (alignments[i] != null))
-          //     ? CellStyle(
-          //         alignment: alignments[i],
-          //       )
-          //     : null,
         )
           .._isFirst = (i == 0)
           .._isLast = (i == cells.length - 1)
