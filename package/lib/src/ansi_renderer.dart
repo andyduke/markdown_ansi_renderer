@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:io' as io;
-import 'package:barbecue/barbecue.dart';
 import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
 import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:markdown_ansi_renderer/src/styles.dart';
-import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
+import 'package:markdown_ansi_renderer/src/table_styles.dart';
 
 /// Translates a parsed AST to ANSI codes.
 class AnsiRenderer implements NodeVisitor {
@@ -28,7 +27,10 @@ class AnsiRenderer implements NodeVisitor {
     'pre': AnsiPreStyle(),
     'ul': AnsiStyle(style: '', reset: ''),
     'li': AnsiListItemStyle(),
-    // TODO: table -> render via "barbecue" (https://pub.dev/packages/barbecue)
+    'table': AnsiTableStyle(),
+    'tr': AnsiTableRowStyle(),
+    'th': AnsiTableCellStyle(),
+    'td': AnsiTableCellStyle(),
   };
 
   late StringBuffer _buffer;
@@ -37,6 +39,7 @@ class AnsiRenderer implements NodeVisitor {
   String? _lastVisitedTag;
   final List<String> _styleStack = [];
   final List<AnsiStyle> _tagStyleStack = [];
+  final List<AnsiStyle> _tagCompoundStyleStack = [];
 
   /// Whether to use ANSI codes for converting markdown. If disabled, markdown will be converted into a plain test.
   final bool ansiEnabled;
@@ -99,6 +102,11 @@ class AnsiRenderer implements NodeVisitor {
     // print('tag: ${element.tag}');
 
     if (tagStyles.containsKey(element.tag)) {
+      final AnsiStyle? parentStyle = _tagCompoundStyleStack.isNotEmpty ? _tagCompoundStyleStack.last : null;
+      if (tagStyles[element.tag]!.isCompound) {
+        _tagCompoundStyleStack.add(tagStyles[element.tag]!);
+      }
+
       _tagStyleStack.add(tagStyles[element.tag]!);
 
       if (ansiEnabled) {
@@ -109,7 +117,7 @@ class AnsiRenderer implements NodeVisitor {
         }
       }
 
-      final begin = tagStyles[element.tag]!.renderBegin(element, ansiEnabled);
+      final begin = tagStyles[element.tag]!.renderBegin(element, ansiEnabled, parentStyle: parentStyle);
       if (begin != null) {
         _buffer.write(begin);
       }
@@ -117,9 +125,9 @@ class AnsiRenderer implements NodeVisitor {
 
     _lastVisitedTag = element.tag;
 
-    if (element is TableElement) {
-      _buffer.write(element.table.render(border: element.border));
-    }
+    // if (element is TableElement) {
+    //   _buffer.write(element.render());
+    // }
 
     if (element.isEmpty) {
       // Empty element like <hr/>.
@@ -133,6 +141,8 @@ class AnsiRenderer implements NodeVisitor {
     } else {
       _elementStack.add(element);
       return true;
+
+      // return (element is! CellElement);
     }
   }
 
@@ -150,9 +160,14 @@ class AnsiRenderer implements NodeVisitor {
     _lastVisitedTag = _elementStack.removeLast().tag;
 
     if (tagStyles.containsKey(element.tag)) {
+      final AnsiStyle? parentStyle = _tagCompoundStyleStack.isNotEmpty ? _tagCompoundStyleStack.last : null;
+      if (tagStyles[element.tag]!.isCompound) {
+        _tagCompoundStyleStack.removeLast();
+      }
+
       if (_tagStyleStack.isNotEmpty) _tagStyleStack.removeLast();
 
-      final end = tagStyles[element.tag]!.renderEnd(element, ansiEnabled);
+      final end = tagStyles[element.tag]!.renderEnd(element, ansiEnabled, parentStyle: parentStyle);
       if (end != null) {
         _buffer.write(end);
       }
@@ -172,6 +187,10 @@ class AnsiRenderer implements NodeVisitor {
         _buffer.writeln();
       }
     }
+
+    // if (element is TableElement) {
+    //   _buffer.write(element.render());
+    // }
   }
 }
 

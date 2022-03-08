@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math' as Math;
+import 'dart:math' as math;
 import 'package:io/ansi.dart';
 import 'package:markdown/markdown.dart';
 
@@ -31,6 +31,8 @@ class AnsiStyle {
     this.transform,
   });
 
+  bool get isCompound => false;
+
   /// Outputs the ANSI codes for the given markdown element style.
   String? renderStyle(Element element) {
     return style;
@@ -42,12 +44,12 @@ class AnsiStyle {
   }
 
   /// Displays text at the beginning of a markdown element (can be used to display links, footnotes, etc.).
-  String? renderBegin(Element element, bool ansiEnabled) {
+  String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     return null;
   }
 
   /// Displays text at the end of a markdown element (can be used to display links, footnotes, etc.).
-  String? renderEnd(Element element, bool ansiEnabled) {
+  String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     return null;
   }
 
@@ -84,7 +86,7 @@ class AnsiHeadingStyle extends AnsiBlockStyle {
         );
 
   @override
-  String? renderBegin(Element element, bool ansiEnabled) {
+  String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     return !ansiEnabled ? '\n' : null;
   }
 }
@@ -103,7 +105,7 @@ class AnsiLinkStyle extends AnsiStyle {
         );
 
   @override
-  String? renderEnd(Element element, bool ansiEnabled) {
+  String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     final prefix = element.textContent.trim().isNotEmpty ? ' ' : '';
     return '$prefix(${element.attributes['href']})';
   }
@@ -130,7 +132,7 @@ class AnsiHRStyle extends AnsiStyle {
   }) : super(style: '');
 
   @override
-  String? renderBegin(Element element, bool ansiEnabled) {
+  String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     return ''.padLeft(defaultSize, character);
   }
 }
@@ -145,7 +147,7 @@ class AnsiCodeStyle extends AnsiStyle {
   bool _isMultiline(Element element) => _isMultilineText(element.textContent);
 
   @override
-  String? renderBegin(Element element, bool ansiEnabled) {
+  String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     if (!_isMultiline(element)) {
       return ansiEnabled ? '' : '"';
     } else {
@@ -154,7 +156,7 @@ class AnsiCodeStyle extends AnsiStyle {
   }
 
   @override
-  String? renderEnd(Element element, bool ansiEnabled) {
+  String? renderEnd(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
     if (!_isMultiline(element)) {
       return ansiEnabled ? '' : '"';
     } else {
@@ -182,7 +184,7 @@ class AnsiPreStyle extends AnsiBlockStyle {
       List<String> lines = splitter.convert(text);
 
       // Find maximum lines width
-      final maxWidth = lines.fold<int>(0, (max, line) => Math.max(max, line.length));
+      final maxWidth = lines.fold<int>(0, (max, line) => math.max(max, line.length));
 
       // Fill lines to maximum width
       lines = lines.map((line) => line.padRight(maxWidth)).toList(growable: false);

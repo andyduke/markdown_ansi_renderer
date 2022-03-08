@@ -7,3 +7,5 @@ export 'src/syntaxes/table_syntax.dart' show AnsiTableSyntax;
 export 'src/styles.dart';
 export 'src/renderer.dart';
 export 'src/ansi_renderer.dart';
+
+export 'src/table/border.dart';

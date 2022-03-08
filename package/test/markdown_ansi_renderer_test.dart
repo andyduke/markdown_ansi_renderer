@@ -30,4 +30,26 @@ void main() {
 
     // expect(text, isTrue);
   });
+
+  test('Cell formatting', () {
+    final String mdText = '''
+| Name            |  Price |
+|-----------------|-------:|
+| Morgran **Aero** 8  | 166944 |
+| Morgran Plus 4  |  69980 |
+''';
+
+    final text = markdownToAnsi(
+      mdText,
+      inlineSyntaxes: [StrikethroughSyntax(), UnderlineSyntax(), AnyTagSyntax()],
+      blockSyntaxes: [
+        AnsiTableSyntax(
+          colSpacing: 4,
+        ),
+      ],
+    );
+    print(text);
+
+    // expect(text, isTrue);
+  });
 }

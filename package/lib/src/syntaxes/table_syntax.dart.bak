@@ -1,7 +1,6 @@
 import 'package:barbecue/barbecue.dart';
 import 'package:charcode/charcode.dart';
 import 'package:markdown/markdown.dart';
-import 'package:markdown_ansi_renderer/src/table/border.dart';
 
 /// A pattern which should never be used. It just satisfies non-nullability of
 /// pattern fields.
@@ -10,7 +9,6 @@ final _dummyPattern = RegExp('');
 /// A line of hyphens separated by at least one pipe.
 final _tablePattern = RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?$');
 
-/*
 class TableElement extends Element {
   final Table table;
   final TextBorder? border;
@@ -28,81 +26,6 @@ class TableElement extends Element {
         // .map((cell) => Element('cell', [Text(cell.cell.content)]))
         .toList(growable: false);
   }
-}
-*/
-
-class TableElement extends Element {
-  final AnsiTableBorder? border;
-  final TableStyle? style;
-  final CellStyle? cellStyle;
-
-  TableElement(
-    String tag,
-    List<Node>? children, {
-    this.border,
-    this.style,
-    this.cellStyle,
-  }) : super(tag, children);
-
-  /*
-  Row _renderRow(List<Node> nodes, {CellStyle? cellstyle}) {
-    final result = Row(
-      cells: nodes.map(_renderNode).toList(growable: false),
-      cellStyle: cellStyle,
-    );
-  }
-
-  Cell _renderNode(Node node) {
-    if (Node is Element) {
-    } else {
-      return node.textContent;
-    }
-  }
-  */
-
-  /*
-  String render() {
-    return '<${children!.map((c) => c.toString()).toList()}>';
-
-    // TableSection? head, body;
-
-    // if ((children!.length > 0) && (children!.first is Element)) {
-    //   head = TableSection(rows: [_renderRow((children!.first as Element).children!)]);
-    // }
-  }
-  */
-}
-
-class CellElement extends Element {
-  final CellStyle? style;
-
-  bool _isFirst = false;
-  bool _isLast = false;
-  int _index = 0;
-  TextAlignment? _alignment;
-
-  bool get isFirst => _isFirst;
-  bool get isLast => _isLast;
-  int get index => _index;
-  TextAlignment get alignment => _alignment ?? TextAlignment.TopLeft;
-
-  CellElement(String tag, List<Node>? children, {this.style}) : super(tag, children);
-}
-
-class RowElement extends Element {
-  final CellStyle? style;
-
-  bool _isFirst = false;
-  bool _isLast = false;
-
-  bool get isFirst => _isFirst;
-  bool get isLast => _isLast;
-
-  RowElement(
-    String tag,
-    List<Node>? children, {
-    this.style,
-  }) : super(tag, children);
 }
 
 class TableCell extends Cell {
@@ -124,7 +47,7 @@ class AnsiTableSyntax extends BlockSyntax {
   final TableStyle? style;
 
   /// Table border style (ASCII, Pseudographics)
-  final AnsiTableBorder? border;
+  final TextBorder? border;
 
   /// Default cell style
   final CellStyle? cellStyle;
@@ -161,55 +84,42 @@ class AnsiTableSyntax extends BlockSyntax {
   Node? parse(BlockParser parser) {
     var alignments = _parseAlignments(parser.next!);
     var columnCount = alignments.length;
-    var headRow = _parseRow(parser, alignments, 'th', cellStyle: CellStyle(borderBottom: true));
-    if (headRow.children!.length != columnCount) {
-      return null;
-    }
-    (headRow as RowElement)._isFirst = true;
-    var head = Element('thead', [headRow]);
+    var headRow = _parseRow(parser, alignments, cellStyle: CellStyle(borderBottom: true));
+    // if (headRow.children!.length != columnCount) {
+    //   return null;
+    // }
+    var head = TableSection(rows: [headRow]);
 
     // Advance past the divider of hyphens.
     parser.advance();
 
-    var rows = <Element>[];
+    var rows = <Row>[];
     while (!parser.isDone && !BlockSyntax.isAtBlockEnd(parser)) {
-      var row = _parseRow(parser, alignments, 'td');
-      var children = row.children;
-      if (children != null) {
+      var row = _parseRow(parser, alignments);
+      var children = row.cells;
+      if (children.isNotEmpty) {
         while (children.length < columnCount) {
           // Insert synthetic empty cells.
-          children.add(Element.empty('td'));
+          children.add(Cell(''));
         }
         while (children.length > columnCount) {
           children.removeLast();
         }
       }
-      while (row.children!.length > columnCount) {
-        row.children!.removeLast();
+      while (row.cells.length > columnCount) {
+        row.cells.removeLast();
       }
       rows.add(row);
     }
 
-    if (rows.isEmpty) {
-      return TableElement(
-        'table',
-        [head],
-        border: border,
-        style: style,
-        cellStyle: cellStyle ?? const CellStyle(),
-      );
-    } else {
-      (rows.last as RowElement)._isLast = true;
+    final table = Table(
+      tableStyle: style,
+      cellStyle: cellStyle ?? const CellStyle(),
+      header: head,
+      body: TableSection(rows: rows),
+    );
 
-      var body = Element('tbody', rows);
-      return TableElement(
-        'table',
-        [head, body],
-        border: border,
-        style: style,
-        cellStyle: cellStyle ?? const CellStyle(),
-      );
-    }
+    return TableElement(table, border: border);
   }
 
   List<TextAlignment?> _parseAlignments(String line) {
@@ -243,7 +153,7 @@ class AnsiTableSyntax extends BlockSyntax {
   ///
   /// [alignments] is used to annotate an alignment on each cell, and
   /// [cellType] is used to declare either "td" or "th" cells.
-  Element _parseRow(BlockParser parser, List<TextAlignment?> alignments, String cellType, {CellStyle? cellStyle}) {
+  Row _parseRow(BlockParser parser, List<TextAlignment?> alignments, {CellStyle? cellStyle}) {
     var line = parser.current;
     var cells = <String>[];
     var index = _walkPastOpeningPipe(line);
@@ -301,25 +211,19 @@ class AnsiTableSyntax extends BlockSyntax {
 
     var row = [
       for (var i = 0; i < cells.length; i++)
-        CellElement(
-          cellType,
-          [UnparsedContent(_padCell(i, cells.length, cells[i]))],
+        TableCell(
+          _padCell(i, cells.length, cells[i]),
           style: ((i < alignments.length) && (alignments[i] != null))
               ? CellStyle(
                   alignment: alignments[i],
                 )
               : null,
         )
-          .._isFirst = (i == 0)
-          .._isLast = (i == cells.length - 1)
-          .._index = i
-          .._alignment = alignments[i],
     ];
 
-    return RowElement(
-      'tr',
-      row,
-      style: cellStyle,
+    return Row(
+      cells: row,
+      cellStyle: cellStyle,
     );
   }
 
