@@ -1,6 +1,26 @@
 import 'package:characters/characters.dart';
 
+/// Class for customizing table borders.
 class AnsiTableBorder {
+  /// Character set for drawing a table.
+  ///
+  /// 16 characters that define the parts of the frame of the table in the following order:
+  /// 1. empty - fills empty space inside the cell when aligned
+  /// 2. down - not currently in use
+  /// 3. up - not currently in use
+  /// 4. vertical - vertical line that draws the vertical separation between cells
+  /// 5. right - not currently in use
+  /// 6. downAndRight - upper left corner symbol
+  /// 7. upAndRight - lower left corner symbol
+  /// 8. verticalAndRight - left T-connection symbol
+  /// 9. left - not currently in use
+  /// 10. downAndLeft - upper right corner symbol
+  /// 11. upAndLeft - lower right corner symbol
+  /// 12. verticalAndLeft - right T-connection symbol
+  /// 13. horizontal - a horizontal line that draws a horizontal separator between cells
+  /// 14. downAndHorizontal - upper T-connection symbol
+  /// 15. upAndHorizontal - lower T-connection symbol
+  /// 16. verticalAndHorizontal - cross-shaped connection symbol between cells
   final Characters characters;
 
   factory AnsiTableBorder(String string) {

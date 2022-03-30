@@ -4,12 +4,14 @@ import 'package:markdown_ansi_renderer/markdown_ansi_renderer.dart';
 import 'package:markdown_ansi_renderer/src/syntaxes/table_syntax.dart';
 import 'package:markdown_ansi_renderer/src/table/alignment.dart';
 
+/// Class for setting the table style.
 class AnsiTableStyle extends AnsiBlockStyle {
   @override
   bool get isCompound => true;
 
-  AnsiTableBorder? _border;
+  /// Table frame settings
   AnsiTableBorder? get border => _border;
+  AnsiTableBorder? _border;
 
   @override
   String? renderBegin(Element element, bool ansiEnabled, {AnsiStyle? parentStyle}) {
@@ -26,14 +28,17 @@ class AnsiTableStyle extends AnsiBlockStyle {
     return '';
   }
 
-  int? _width;
+  /// Table width in characters
   int get width => _width ?? 0;
+  int? _width;
 
-  final List<int> _columnWidth = [];
+  /// Column width in characters
   int columnWidth(int index) => _columnWidth[index];
+  final List<int> _columnWidth = [];
 
-  int _columnCount = 0;
+  /// Number of columns in the table
   int get columnCount => _columnCount;
+  int _columnCount = 0;
 
   int _calcWidth(Element element) {
     int result = 0;
@@ -75,7 +80,9 @@ class AnsiTableStyle extends AnsiBlockStyle {
   }
 }
 
+/// Class for setting the style of table column headings.
 class AnsiTableHeadStyle extends AnsiStyle {
+  /// Creates a table column header style object.
   AnsiTableHeadStyle() : super(style: '');
 
   @override
@@ -105,7 +112,9 @@ class AnsiTableHeadStyle extends AnsiStyle {
   }
 }
 
+/// Class for setting the table row style.
 class AnsiTableRowStyle extends AnsiStyle {
+  /// Creates a table row style object.
   AnsiTableRowStyle() : super(style: '');
 
   @override
@@ -196,7 +205,9 @@ class AnsiTableRowStyle extends AnsiStyle {
   }
 }
 
+/// Class for setting the table cell style.
 class AnsiTableCellStyle extends AnsiStyle {
+  /// Creates a table cell style object.
   AnsiTableCellStyle() : super(style: '');
 
   @override

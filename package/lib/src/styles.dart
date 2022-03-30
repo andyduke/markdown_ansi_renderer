@@ -31,6 +31,8 @@ class AnsiStyle {
     this.transform,
   });
 
+  /// Should return true for compound styles, such as a "table" style that
+  /// can contain headers, rows, and cells.
   bool get isCompound => false;
 
   /// Outputs the ANSI codes for the given markdown element style.
@@ -75,6 +77,7 @@ class AnsiBlockStyle extends AnsiStyle {
 
 /// Class for setting the style of headings.
 class AnsiHeadingStyle extends AnsiBlockStyle {
+  /// Creates a style object of headings.
   AnsiHeadingStyle({
     String? style,
     String? reset,
@@ -201,6 +204,7 @@ class AnsiPreStyle extends AnsiBlockStyle {
 
 /// Class for setting the list item style.
 class AnsiListItemStyle extends AnsiStyle {
+  /// Creates a style object of list item style.
   AnsiListItemStyle() : super(style: '');
 
   // @override
